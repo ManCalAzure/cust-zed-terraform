@@ -1073,6 +1073,29 @@ resource "zedcloud_network_instance" "tf_lan_1" {
   depends_on = []
 }
 
+##---------- Local type Network Instance --------------------------#
+resource "zedcloud_network_instance" "tf_mqtt_demo_net" {
+  name  = "QUVIA-NET-1"
+  title = "QUVIA-NET-1"
+  kind  = "NETWORK_INSTANCE_KIND_LOCAL"
+  type  = "NETWORK_INSTANCE_DHCP_TYPE_V4"
+  port  = "eth0"
+  device_id = <target edge node>
+  ip {
+    dhcp_range {
+    end = "10.1.0.30"
+    start = "10.1.0.20"
+  }
+    dns = [
+      "1.1.1.1"
+  ]
+    domain          = ""
+    gateway         = "10.1.0.1"
+    ntp             = "64.246.132.14"
+    subnet          = "10.1.0.0/24"
+  }
+}
+
 # ---------- Create Marketplace Apps  -----------------------------#
 resource "zedcloud_application" "tf_ubuntu_24_app_atl_1_nic" {
   name                  = "TF-UBUNTU-24-ATL-APP"
@@ -1129,7 +1152,7 @@ resource "zedcloud_application" "tf_ubuntu_24_app_atl_1_nic" {
       add = true
       name = "cloud-config"
       override = true
-      template        = base64encode(file("./cinit/app_cinit.txt")) ## Test file in working directoy cinit/iosxe_config.txt
+      template        = base64encode(file("./cinit/app_cinit.txt")) ## Text file in working directoy cinit/iosxe_config.txt
     }
    }
     resources {
@@ -1137,6 +1160,86 @@ resource "zedcloud_application" "tf_ubuntu_24_app_atl_1_nic" {
       value         = 20971520
     } 
   }
+}
+
+##--------------------- Marketplace example for SR-IOV--------------------------------------------------------#
+resource "zedcloud_application" "tf_demo_ub_sjc_sriov" {
+  name     = "TF-UBUNTU-1-SRIOV"
+  title    = "TF-UBUNTU-1-SRIOV"
+  networks = 1
+  manifest {
+    ac_kind    = "VMManifest"
+    ac_version = "1.2.0"
+    name       = "TF-UBUNTU-1"
+    owner {
+      user    = "Manny"
+      company = "Zededa"
+      website = "www.zededa.com"
+      email   = "manny@zededa.com"
+    }
+    desc {
+      app_category = "APP_CATEGORY_UNSPECIFIED"
+      category     = "APP_CATEGORY_OPERATING_SYSTEM"
+      logo = {
+        url = "https://assets.ubuntu.com/v1/ff6a9a38-ubuntu-logo-2022.svg"
+      }
+    }
+    images {
+      imagename   = zedcloud_image.demo_sjc_ub_image_1.name
+      imageid     = zedcloud_image.demo_sjc_ub_image_1.id
+      imageformat = "QCOW2"
+      cleartext   = false
+      drvtype     = "HDD"
+      ignorepurge = false
+      maxsize     = 20971520
+      target      = "Disk"
+    }
+    interfaces {
+      name         = "eth1vf0"
+      type         = "IO_TYPE_ETH_VF"
+      directattach = true
+      privateip    = false
+      acls {
+        matches { ### Outbound rule 
+          type  = "ip"
+          value = "0.0.0.0/0"
+        }
+      }
+
+    }
+    vmmode    = "HV_HVM"
+    enablevnc = true
+
+    resources {
+      name  = "resourceType"
+      value = "custom"
+    }
+    resources {
+      name  = "cpus"
+      value = 2
+    }
+    resources {
+      name  = "memory"
+      value = 2097152
+    }
+    resources {
+      name  = "storage"
+      value = 20971520
+    }
+    configuration {
+      custom_config {
+        add      = true
+        name     = "cloud-config"
+        override = true
+        template = ""
+      }
+    }
+    app_type            = "APP_TYPE_VM"
+    deployment_type     = "DEPLOYMENT_TYPE_STAND_ALONE"
+    cpu_pinning_enabled = false
+  }
+  user_defined_version = "24"
+  origin_type          = "ORIGIN_LOCAL"
 }
 
 resource "zedcloud_application" "tf_ubuntu_24_app_atl_3_nic" {
@@ -1161,7 +1264,7 @@ resource "zedcloud_application" "tf_ubuntu_24_app_atl_3_nic" {
     app_category = "APP_CATEGORY_CLOUD_APPLICATION"
     category = "APP_CATEGORY_UNSPECIFIED"
       logo        = {
-      url       = "https://upload.wikimedia.org/wikipedia/commons/thumb/7/76/Ubuntu-logo-2022.svg/250px-Ubuntu-logo-2022.svg.png" 
+      url       = "https://upload.wikimedia.org/wikipedia/commons/thumb/7/76/Ubuntu-logo-2022.svg/250px-Ubuntu-logo-2022.svg.png" ## Ubuntu Logo
     }
   }
     resources {
@@ -1218,7 +1321,7 @@ resource "zedcloud_application" "tf_ubuntu_24_app_atl_3_nic" {
       add = true
       name = "cloud-config"
       override = true
-      template        = base64encode(file("./cinit/app_cinit.txt")) ## Test file in working directoy cinit/iosxe_config.txt
+      template        = base64encode(file("./cinit/app_cinit.txt")) ## Text file in working directoy cinit/iosxe_config.txt
     }
    }
     resources {
@@ -1228,6 +1331,49 @@ resource "zedcloud_application" "tf_ubuntu_24_app_atl_3_nic" {
   }
 }
 
+##---------- Sample VM + SRIOV Configuration --------------
+resource "zedcloud_application_instance" "tf_stndlone_ub_vm_1" {
+  name              = "VM-1-SRIOV"
+  title             = "VM-1-SRIOV"
+  project_id        = zedcloud_project.demo_zededa_project_1.id
+  app_id            = zedcloud_application.tf_demo_ub_sjc_sriov.id
+  activate          = true
+  custom_config {
+    add             = true
+    allow_storage_resize = true
+    field_delimiter = "@@@"
+    name            = "cloud-config"
+    override        = true
+    template        = base64encode(file("./c-init/vm-1.txt"))
+  }
+    device_id       = zedcloud_edgenode.demo_en_dell_xr5610_sriov.id
+  
+  drives {
+    imagename       = zedcloud_image.demo_sjc_ub_image_1.name
+    cleartext       = false
+    ignorepurge     = true
+    maxsize         = 20000000
+    preserve        = false
+    target          = "Disk"
+    drvtype         = "HDD"
+    readonly        = false
+  }
+  interfaces {
+    intfname = "eth1vf0"
+    intforder = 1
+    directattach = true
+    io {
+      name = "eth1vf0"
+      type = "IO_TYPE_ETH_VF"
+    }
+    access_vlan_id = 0
+    default_net_instance = false
+    ipaddr = ""
+    macaddr = ""
+    netinstname = ""
+    privateip = false
+  }
+}
 
 ##---------- Sample VM 1 (one interface example) ----------
 resource "zedcloud_application_instance" "tf_vm_deploy_1" {
@@ -1328,3 +1474,4 @@ resource "zedcloud_application_instance" "tf_cisco_deploy_2" {
     privateip = false
   }
 }
+
