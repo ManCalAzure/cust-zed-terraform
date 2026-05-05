@@ -155,6 +155,155 @@ resource "zedcloud_brand" "tf_quvia_dell_brand" {
   }
 }
 
+##------- Sample edge node w/ VLANs 
+resource "zedcloud_edgenode" "demo_en_advantech_1" {
+  model_id       = zedcloud_model.demo_adv_2012_model.id
+  name           = "TF-DEMO-ADV-EN-1"
+  title          = "TF-DEMO-ADV-EN-1"
+  project_id     = zedcloud_project.demo_zededa_project_1.id
+  onboarding_key = var.onboarding_key
+  serialno       = var.serialno
+  description    = "ZED Demo"
+  admin_state    = "ADMIN_STATE_ACTIVE"
+  config_item {
+    key          = "debug.enable.ssh"
+    string_value = var.ssh_pub_key
+  }
+  config_item {
+    key        = "debug.disable.dhcp.all-ones.netmask"
+    bool_value = true
+  }
+  config_item {
+    key        = "debug.enable.console"
+    bool_value = true
+  }
+  config_item {
+    key        = "debug.enable.vga"
+    bool_value = true
+  }
+  config_item {
+    key        = "debug.enable.usb"
+    bool_value = true
+  }
+  config_item {
+    key        = "process.cloud-init.multipart"
+    bool_value = true
+  }
+  edgeviewconfig {
+    generation_id = 0
+    token         = var.edgeview_token
+
+    app_policy {
+      allow_app = true
+    }
+
+    dev_policy {
+      allow_dev = true
+    }
+
+    ext_policy {
+      allow_ext = true
+    }
+
+    jwt_info {
+      allow_sec  = 18000
+      disp_url   = "zedcloud.gmwtus.zededa.dev/api/v1/edge-view"
+      encrypt    = false
+      expire_sec = "0"
+      num_inst   = 3
+    }
+  }
+  interfaces {
+    cost       = 0
+    intf_usage = "ADAPTER_USAGE_APP_SHARED"
+    intfname   = "USB"
+    ztype      = "IO_TYPE_USB_CONTROLLER"
+    netname    = ""
+    tags       = {}
+  }
+  interfaces {
+    cost       = 0
+    intf_usage = "ADAPTER_USAGE_APP_SHARED"
+    intfname   = "COM1"
+    ztype      = "IO_TYPE_COM"
+    tags       = {}
+  }
+  interfaces {
+    cost       = 0
+    intf_usage = "ADAPTER_USAGE_APP_SHARED"
+    intfname   = "COM2"
+    ztype      = "IO_TYPE_COM"
+    tags       = {}
+  }
+  interfaces {
+    cost       = 0
+    intf_usage = "ADAPTER_USAGE_APP_SHARED"
+    intfname   = "COM3"
+    ztype      = "IO_TYPE_COM"
+    tags       = {}
+  }
+  interfaces {
+    cost       = 0
+    intf_usage = "ADAPTER_USAGE_MANAGEMENT"
+    intfname   = "eth0"
+    ztype      = "IO_TYPE_ETH"
+    netname    = ""
+    tags       = {}
+  }
+  interfaces {
+    cost       = 0
+    intf_usage = "ADAPTER_USAGE_MANAGEMENT"
+    intfname   = "eth1"
+    ztype      = "IO_TYPE_ETH"
+    netname    = ""
+    tags       = {}
+  }
+  interfaces {
+    cost       = 0
+    intf_usage = "ADAPTER_USAGE_MANAGEMENT"
+    intfname   = "eth2"
+    ztype      = "IO_TYPE_ETH"
+    netname    = ""
+    tags       = {}
+  }
+  interfaces {
+    cost       = 0
+    intf_usage = "ADAPTER_USAGE_MANAGEMENT"
+    intfname   = "eth3"
+    ztype      = "IO_TYPE_ETH"
+    netname    = ""
+    tags       = {}
+  }
+  interfaces {
+    cost       = 0
+    intf_usage = "ADAPTER_USAGE_APP_SHARED"
+    intfname   = "eth4"
+    ztype      = "IO_TYPE_ETH"
+    netname    = ""
+    tags       = {}
+  }
+  interfaces {
+    cost       = 0
+    intf_usage = "ADAPTER_USAGE_APP_SHARED"
+    intfname   = "eth5"
+    ztype      = "IO_TYPE_ETH"
+    netname    = ""
+    tags       = {}
+  }
+
+  vlan_adapters {
+    logical_label    = "eth0.253"
+    lower_layer_name = "eth0"
+    vlan_id          = 253
+    interface {
+      intfname   = "eth0.253"
+      intf_usage = "ADAPTER_USAGE_MANAGEMENT"
+      netname    = zedcloud_network.demo_eve_net_port.name
+      netid      = zedcloud_network.demo_eve_net_port.id
+      tags       = {}
+    }
+  }
+}
 ##------- no SRIOV
 resource "zedcloud_model" "tf_quvia_dell_model" {
   name          = "TF-Quvia-Dell-XR5610"

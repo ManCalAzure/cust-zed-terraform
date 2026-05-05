@@ -42,3 +42,8 @@ variable "ubuntu_image_sha256" {
   type      = string
   sensitive = true
 }
+
+variable "serialno" {
+  type      = string
+  sensitive = true
+}

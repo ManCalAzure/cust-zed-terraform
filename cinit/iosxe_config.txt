@@ -8,7 +8,7 @@ Content-Transfer-Encoding: 7bit
 Content-Disposition: attachment; filename="openstack/latest/user_data"
 
 hostname c8000v_zededa
-username manny privilege 15 secret 0 <password>
+username ### ### privilege 15 secret 0 <password>
 !
 ! Required for SSH
 !
